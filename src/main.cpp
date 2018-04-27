@@ -14,6 +14,10 @@ constexpr bool fps_limit = true;
 int main(int argc, char* argv[]) {
     Engine e;
 
+    ObjectFactory::get().add_game_object<Tile>(0, 0, Pose::Direction::North, 1);
+    ObjectFactory::get().add_game_object<Tile>(1, 0, Pose::Direction::South, 1);
+    ObjectFactory::get().add_game_object<Tile>(0, 1, Pose::Direction::West, 1);
+
     SDL_Init(SDL_INIT_VIDEO);              // Initialize SDL2
     { // ensure all SDL resources deleted before SDL_Quit
         auto window = sdl2::make_window(

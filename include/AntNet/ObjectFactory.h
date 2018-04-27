@@ -2,8 +2,8 @@
 // Created by jpfeltracco on 4/27/18.
 //
 
-#ifndef ANTNET_ENGINE_H
-#define ANTNET_ENGINE_H
+#ifndef ANTNET_OBJECTFACTORY_H
+#define ANTNET_OBJECTFACTORY_H
 
 #include <utility>
 #include <variant>
