@@ -8,9 +8,13 @@
 #include <AntNet/Game.h>
 #include <AntNet/TextureManager.h>
 #include <AntNet/GameObject.h>
+#include <AntNet/Map.h>
 
+Map* map;
 GameObject* player;
 GameObject* enemy;
+
+SDL_Renderer* Game::renderer = nullptr;
 
 Game::Game() : cnt(0) {
 
@@ -42,13 +46,13 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
             std::cout << "Couldn't create window" << std::endl;
         }
 
-        renderer = SDL_CreateRenderer(window, -1, 0);
+        Game::renderer = SDL_CreateRenderer(window, -1, 0);
 
-        if (!renderer) {
+        if (!Game::renderer) {
             std::cout << "Couldn't create renderer" << std::endl;
             is_running = false;
         } else {
-            SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+            SDL_SetRenderDrawColor(Game::renderer, 255, 255, 255, 255);
         }
 
     } else {
@@ -61,8 +65,9 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
         is_running = false;
         return;
     }
-    player = new GameObject("ant.png", renderer, 0, 0);
-    enemy = new GameObject("ant_enemy.png", renderer, 50, 50);
+    map = new Map();
+    player = new GameObject("ant.png", 0, 0);
+    enemy = new GameObject("ant_enemy.png", 50, 50);
 }
 
 void Game::handle_events() {
@@ -85,15 +90,16 @@ void Game::update() {
 }
 
 void Game::render() {
-    SDL_RenderClear(renderer);
+    SDL_RenderClear(Game::renderer);
+    map->draw_map();
     player->render();
     enemy->render();
-    SDL_RenderPresent(renderer);
+    SDL_RenderPresent(Game::renderer);
 }
 
 void Game::clean() {
     SDL_DestroyWindow(window);
-    SDL_DestroyRenderer(renderer);
+    SDL_DestroyRenderer(Game::renderer);
 
     SDL_Quit();
 

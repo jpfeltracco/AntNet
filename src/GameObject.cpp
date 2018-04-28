@@ -5,9 +5,9 @@
 #include <AntNet/GameObject.h>
 #include <AntNet/TextureManager.h>
 
-GameObject::GameObject(const char* texturesheet, SDL_Renderer* ren, int x, int y)
-    : xpos(x), ypos(y), renderer(ren) {
-    obj_texture = TextureManager::load_texture(texturesheet, ren);
+GameObject::GameObject(const char* texturesheet, int x, int y)
+    : xpos(x), ypos(y) {
+    obj_texture = TextureManager::load_texture(texturesheet);
 }
 
 GameObject::~GameObject() {
@@ -32,7 +32,7 @@ void GameObject::update() {
 }
 
 void GameObject::render() {
-    SDL_RenderCopy(renderer, obj_texture, &src_rect, &dst_rect);
+    SDL_RenderCopy(Game::renderer, obj_texture, &src_rect, &dst_rect);
 }
 
 
