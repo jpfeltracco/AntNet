@@ -8,7 +8,7 @@
 #include <variant>
 #include <vector>
 
-#include <AntNet/Component.h>
+#include <AntNet/Components.h>
 #include <AntNet/Handle.h>
 #include <AntNet/Game.h>
 

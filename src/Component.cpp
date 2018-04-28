@@ -2,7 +2,7 @@
 // Created by jpfeltracco on 4/27/18.
 //
 
-#include <AntNet/Component.h>
+#include <AntNet/Components.h>
 
 Pose::Pose()
         : x(0), y(0), d(Direction::North) { }

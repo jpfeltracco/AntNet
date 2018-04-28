@@ -9,12 +9,17 @@
 #include <AntNet/TextureManager.h>
 #include <AntNet/GameObject.h>
 #include <AntNet/Map.h>
+#include <AntNet/ECS.h>
+#include <AntNet/Components.h>
 
 Map* map;
 GameObject* player;
 GameObject* enemy;
 
 SDL_Renderer* Game::renderer = nullptr;
+
+Manager manager;
+auto& new_player(manager.add_entity());
 
 Game::Game() : cnt(0) {
 
@@ -65,9 +70,11 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
         is_running = false;
         return;
     }
-    map = new Map();
     player = new GameObject("ant.png", 0, 0);
     enemy = new GameObject("ant_enemy.png", 50, 50);
+    map = new Map();
+
+    new_player.add_component<PositionComponent>();
 }
 
 void Game::handle_events() {
@@ -87,6 +94,10 @@ void Game::update() {
     cnt++;
     player->update();
     enemy->update();
+
+    manager.update();
+    std::cout << new_player.get_component<PositionComponent>().x() << ","
+              << new_player.get_component<PositionComponent>().y() << std::endl;
 }
 
 void Game::render() {

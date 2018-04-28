@@ -15,7 +15,7 @@ add_executable(AntNet
         README.md
         src/main.cpp
         src/GameObject.cpp
-        include/AntNet/Component.h
+        include/AntNet/Components.h
         include/AntNet/Engine.h
         include/AntNet/GameObject.h
         include/AntNet/ObjectFactory.h

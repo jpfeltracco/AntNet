@@ -8,7 +8,7 @@
 #include <variant>
 #include <vector>
 
-#include <AntNet/Component.h>
+#include <AntNet/Components.h>
 #include <AntNet/Handle.h>
 
 class System : HandleChangeReceiver {
