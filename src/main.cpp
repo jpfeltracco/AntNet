@@ -12,9 +12,13 @@ constexpr Uint32 frame_delay = 1000 / fps;
 constexpr bool fps_limit = true;
 
 int main(int argc, char* argv[]) {
-    Engine e;
+    auto& e = Engine::get();
+
+    factory::gameobject().add_handle_change_receiver(&e);
 
     factory::gameobject().add<Tile>(0, 0, 1);
+    factory::gameobject().add<Tile>(1, 0, 1);
+    factory::gameobject().add<Tile>(0, 1, 1);
 
     std::unique_ptr<System> rendering_sys(new RenderingSystem());
     e.add(std::move(rendering_sys));

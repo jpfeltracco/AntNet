@@ -16,11 +16,12 @@ public:
     GameObject();
     void update();
     void add_component(Handle comp_handle);
+    const std::vector<Handle>& get_component_handles();
 private:
     std::vector<Handle> components;
 };
 
-class Tile : GameObject {
+class Tile : public GameObject {
 public:
     Tile();
     Tile(int x, int y, int texture_handle);

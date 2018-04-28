@@ -20,4 +20,9 @@ private:
     std::optional<std::size_t> handle;
 };
 
+class HandleChangeReceiver {
+public:
+    virtual void notify(Handle h, bool removed) = 0;
+};
+
 #endif //ANTNET_HANDLE_H

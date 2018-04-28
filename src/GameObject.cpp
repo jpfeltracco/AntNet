@@ -16,6 +16,10 @@ void GameObject::add_component(Handle comp_handle) {
     components.push_back(comp_handle);
 }
 
+const std::vector<Handle>& GameObject::get_component_handles() {
+    return components;
+}
+
 Tile::Tile() {
     auto pose_handle = factory::component().add<Pose>();
     auto sprite_handle = factory::component().add<Sprite>();
