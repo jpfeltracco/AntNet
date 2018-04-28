@@ -2,7 +2,6 @@
 
 #include <SDL2/SDL.h>
 
-#include "AntNet/HandleManager.h"
 #include "AntNet/SDL_wrap.h"
 #include "AntNet/Engine.h"
 #include "AntNet/GameObject.h"
@@ -15,9 +14,7 @@ constexpr bool fps_limit = true;
 int main(int argc, char* argv[]) {
     Engine e;
 
-    ObjectFactory::get().add_game_object<Tile>(0, 0, Pose::Direction::North, 1);
-    ObjectFactory::get().add_game_object<Tile>(1, 0, Pose::Direction::South, 1);
-    ObjectFactory::get().add_game_object<Tile>(0, 1, Pose::Direction::West, 1);
+    factory::gameobject().add<Tile>(0, 0, 1);
 
     std::unique_ptr<System> rendering_sys(new RenderingSystem());
     e.add(std::move(rendering_sys));

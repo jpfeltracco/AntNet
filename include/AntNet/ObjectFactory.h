@@ -8,38 +8,70 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <optional>
 
-#include "GameObject.h"
-#include "Component.h"
+#include <AntNet/GameObject.h>
+#include <AntNet/Handle.h>
 
-class ObjectFactory {
+template <class FactoryT>
+class Factory {
 public:
-    static ObjectFactory& get() {
-        static ObjectFactory instance;
+    static Factory& get() {
+        static Factory instance;
         return instance;
     }
-    ObjectFactory(ObjectFactory const& o) = delete;
-    void operator=(ObjectFactory const& o) = delete;
+
+    Factory(const Factory& o) = delete;
+    void operator=(const Factory& o) = delete;
 
     template <class T, class... Args>
-    auto add_component(Args&&... args) {
+    auto add(Args&&... args) {
         auto comp = T(std::forward<Args>(args)...);
-        components.push_back(comp);
-        return static_cast<int>(components.size()) - 1; // return handle
+        auto free_handle = find_free_handle();
+        if (free_handle.is_valid()) {
+            get_object(free_handle) = comp;
+            count++;
+        }
+        return free_handle; // return handle
     }
 
-    template <class T, class... Args>
-    auto add_game_object(Args&&... args) {
-        auto comp = T(std::forward<Args>(args)...);
-        gameobjects.push_back(comp);
-        return static_cast<int>(gameobjects.size()) - 1; // return handle
+    FactoryT& get_object(Handle h) {
+        return objects[h.get()];
+    }
+
+    auto find_free_handle() {
+        Handle handle;
+
+        if (objects.size() == count) {
+            objects.push_back(std::monostate());
+            handle.set(objects.size() - 1);
+
+            return handle;
+        }
+
+        // there should be an empty slot, capacity isn't full
+        for (std::size_t i = 0; i < objects.size(); ++i) {
+            auto e_ptr = std::get_if<std::monostate>(&objects[i]);
+            if (e_ptr != nullptr) {
+                handle.set(i);
+                return handle;
+            }
+        }
+
+        // uninitialized handle gets returned
+        return handle;
     }
 
 private:
-    ObjectFactory() = default; // no one else can instantiate
-    std::vector<gameobject_t> gameobjects;
-    std::vector<component_t> components;
+    Factory() : count(0) { }; // no one else can instantiate
+
+    std::vector<FactoryT> objects;
+    std::size_t count;
 };
 
+namespace factory {
+    static auto& gameobject() { return Factory<gameobject_t>::get(); }
+    static auto& component() { return Factory<component_t>::get(); }
+}
 
 #endif //ANTNET_ENGINE_H

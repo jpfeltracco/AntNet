@@ -5,27 +5,27 @@
 #ifndef ANTNET_GAMEOBJECT_H
 #define ANTNET_GAMEOBJECT_H
 
-#include <array>
 #include <variant>
+#include <vector>
 
-#include "Component.h"
+#include <AntNet/Component.h>
+#include <AntNet/Handle.h>
 
 class GameObject {
 public:
     GameObject();
     void update();
-    int get_component_handle(Component::Type type);
-    void set_component_handle(Component::Type type, int handle);
+    void add_component(Handle comp_handle);
 private:
-    std::array<int, static_cast<std::size_t>(Component::Type::Count)> components;
+    std::vector<Handle> components;
 };
 
 class Tile : GameObject {
 public:
     Tile();
-    Tile(int x, int y, Pose::Direction d, int texture_handle);
+    Tile(int x, int y, int texture_handle);
 };
 
-using gameobject_t = std::variant<Tile>;
+using gameobject_t = std::variant<std::monostate, Tile>;
 
 #endif //ANTNET_GAMEOBJECT_H

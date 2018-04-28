@@ -6,29 +6,28 @@
 #include <AntNet/ObjectFactory.h>
 
 GameObject::GameObject() {
-    for (auto& e : components) e = -1; // no handle found
 }
 
 void GameObject::update() {
 
 }
 
-int GameObject::get_component_handle(Component::Type type) {
-    return components[static_cast<std::size_t>(type)];
-}
-
-void GameObject::set_component_handle(Component::Type type, int handle) {
-    components[static_cast<std::size_t>(type)] = handle;
+void GameObject::add_component(Handle comp_handle) {
+    components.push_back(comp_handle);
 }
 
 Tile::Tile() {
-    auto pose_handle = ObjectFactory::get().add_component<Pose>();
-    this->set_component_handle(Component::Type::Pose, pose_handle);
+    auto pose_handle = factory::component().add<Pose>();
+    auto sprite_handle = factory::component().add<Sprite>();
+
+    add_component(pose_handle);
+    add_component(sprite_handle);
 }
 
-Tile::Tile(int x, int y, Pose::Direction d, int texture_handle) {
-    auto pose_handle = ObjectFactory::get().add_component<Pose>(x, y, d);
-    this->set_component_handle(Component::Type::Pose, pose_handle);
-    auto sprite_handle = ObjectFactory::get().add_component<Sprite>(texture_handle);
-    this->set_component_handle(Component::Type::Sprite, sprite_handle);
+Tile::Tile(int x, int y, int texture_handle) {
+    auto pose_handle = factory::component().add<Pose>(x, y, Pose::Direction::North);
+    auto sprite_handle = factory::component().add<Sprite>(texture_handle);
+
+    add_component(pose_handle);
+    add_component(sprite_handle);
 }

@@ -17,10 +17,10 @@ std::vector<int>& System::get_component_handles() {
 }
 
 RenderingSystem::RenderingSystem() {
-    auto& objs = ObjectFactory::get().get_gameobjects_list();
-
-    for (auto& game_object : objs) {
-        auto go_ptr = std::get_if<Tile>(&game_object);
-        if (go_ptr != nullptr) 
-    }
+//    auto& objs = ObjectFactory::get().get_gameobjects_list();
+//
+//    for (auto& game_object : objs) {
+//        auto go_ptr = std::get_if<Tile>(&game_object);
+//        if (go_ptr != nullptr)
+//    }
 }

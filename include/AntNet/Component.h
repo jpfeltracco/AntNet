@@ -9,7 +9,6 @@
 
 class Component {
 public:
-    enum class Type { Pose = 0, Sprite, Count };
 };
 
 class Pose : Component {
@@ -29,6 +28,6 @@ public:
     int texture_handle;
 };
 
-using component_t = std::variant<Pose, Sprite>;
+using component_t = std::variant<std::monostate, Pose, Sprite>;
 
 #endif //ANTNET_COMPONENT_H
