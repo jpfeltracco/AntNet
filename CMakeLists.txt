@@ -14,11 +14,7 @@ add_executable(AntNet
         LICENSE
         README.md
         src/main.cpp
-        src/ObjectFactory.cpp
-        src/Component.cpp
         src/GameObject.cpp
-        src/System.cpp
-        src/Engine.cpp
         include/AntNet/Component.h
         include/AntNet/Engine.h
         include/AntNet/GameObject.h

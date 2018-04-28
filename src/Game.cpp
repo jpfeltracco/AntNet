@@ -7,9 +7,10 @@
 
 #include <AntNet/Game.h>
 #include <AntNet/TextureManager.h>
+#include <AntNet/GameObject.h>
 
-SDL_Texture* ant_tex;
-SDL_Rect src_r, dest_r;
+GameObject* player;
+GameObject* enemy;
 
 Game::Game() : cnt(0) {
 
@@ -60,7 +61,8 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
         is_running = false;
         return;
     }
-    ant_tex = TextureManager::load_texture("ant.png", renderer);
+    player = new GameObject("ant.png", renderer, 0, 0);
+    enemy = new GameObject("ant_enemy.png", renderer, 50, 50);
 }
 
 void Game::handle_events() {
@@ -78,16 +80,14 @@ void Game::handle_events() {
 
 void Game::update() {
     cnt++;
-
-    dest_r.h = 64;
-    dest_r.w = 64;
-
-    dest_r.x = cnt;
+    player->update();
+    enemy->update();
 }
 
 void Game::render() {
     SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, ant_tex, nullptr, &dest_r);
+    player->render();
+    enemy->render();
     SDL_RenderPresent(renderer);
 }
 

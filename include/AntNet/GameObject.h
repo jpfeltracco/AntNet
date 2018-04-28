@@ -10,23 +10,24 @@
 
 #include <AntNet/Component.h>
 #include <AntNet/Handle.h>
+#include <AntNet/Game.h>
 
 class GameObject {
 public:
-    GameObject();
+    GameObject(const char* texturesheet, SDL_Renderer* ren, int x, int y);
+    ~GameObject();
+
     void update();
-    void add_component(Handle comp_handle);
-    const std::vector<Handle>& get_component_handles();
+    void render();
+
 private:
-    std::vector<Handle> components;
+    int xpos;
+    int ypos;
+
+    SDL_Texture* obj_texture;
+    SDL_Rect src_rect, dst_rect;
+    SDL_Renderer* renderer;
 };
 
-class Tile : public GameObject {
-public:
-    Tile();
-    Tile(int x, int y, int texture_handle);
-};
-
-using gameobject_t = std::variant<std::monostate, Tile>;
 
 #endif //ANTNET_GAMEOBJECT_H
