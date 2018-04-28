@@ -24,7 +24,7 @@ add_executable(AntNet
         include/AntNet/GameObject.h
         include/AntNet/ObjectFactory.h
         include/AntNet/SDL_wrap.h
-        include/AntNet/System.h include/AntNet/Handle.h)
+        include/AntNet/System.h include/AntNet/Handle.h src/Game.cpp include/AntNet/Game.h include/AntNet/TextureManager.h src/TextureManager.cpp)
 
 target_include_directories(AntNet PRIVATE
         ${CMAKE_SOURCE_DIR}/include/
