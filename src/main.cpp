@@ -1,11 +1,12 @@
 #include <iostream>
 
 #include <SDL2/SDL.h>
-#include <AntNet/SDL_wrap.h>
 
-#include <AntNet/Engine.h>
-#include <AntNet/GameObject.h>
-#include <AntNet/ObjectFactory.h>
+#include "AntNet/HandleManager.h"
+#include "AntNet/SDL_wrap.h"
+#include "AntNet/Engine.h"
+#include "AntNet/GameObject.h"
+#include "AntNet/ObjectFactory.h"
 
 constexpr Uint32 fps = 60;
 constexpr Uint32 frame_delay = 1000 / fps;
@@ -17,6 +18,9 @@ int main(int argc, char* argv[]) {
     ObjectFactory::get().add_game_object<Tile>(0, 0, Pose::Direction::North, 1);
     ObjectFactory::get().add_game_object<Tile>(1, 0, Pose::Direction::South, 1);
     ObjectFactory::get().add_game_object<Tile>(0, 1, Pose::Direction::West, 1);
+
+    std::unique_ptr<System> rendering_sys(new RenderingSystem());
+    e.add(std::move(rendering_sys));
 
     SDL_Init(SDL_INIT_VIDEO);              // Initialize SDL2
     { // ensure all SDL resources deleted before SDL_Quit

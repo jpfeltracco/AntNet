@@ -9,11 +9,6 @@ void Engine::update(float dt) {
 
 }
 
-// main loop? What is this for?
-void Engine::loop() {
-
-}
-
-void Engine::add(System* sys) {
-
+void Engine::add(std::unique_ptr<System> sys_ptr) {
+    systems.push_back(std::move(sys_ptr));
 }

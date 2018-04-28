@@ -31,13 +31,13 @@ public:
     template <class T, class... Args>
     auto add_game_object(Args&&... args) {
         auto comp = T(std::forward<Args>(args)...);
-        game_objects.push_back(comp);
-        return static_cast<int>(game_objects.size()) - 1; // return handle
+        gameobjects.push_back(comp);
+        return static_cast<int>(gameobjects.size()) - 1; // return handle
     }
 
 private:
     ObjectFactory() = default; // no one else can instantiate
-    std::vector<gameobject_t> game_objects;
+    std::vector<gameobject_t> gameobjects;
     std::vector<component_t> components;
 };
 

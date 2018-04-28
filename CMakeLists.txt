@@ -18,7 +18,8 @@ add_executable(AntNet
         src/Component.cpp
         src/GameObject.cpp
         src/System.cpp
-        src/Engine.cpp)
+        src/Engine.cpp
+        src/HandleManager.cpp)
 
 target_include_directories(AntNet PRIVATE
         ${CMAKE_SOURCE_DIR}/include/
