@@ -15,12 +15,22 @@ add_executable(AntNet
         README.md
         src/main.cpp
         src/GameObject.cpp
-        include/AntNet/Components.h
+        include/AntNet/ECS/Components.h
         include/AntNet/Engine.h
         include/AntNet/GameObject.h
         include/AntNet/ObjectFactory.h
         include/AntNet/SDL_wrap.h
-        include/AntNet/System.h include/AntNet/Handle.h src/Game.cpp include/AntNet/Game.h include/AntNet/TextureManager.h src/TextureManager.cpp src/Map.cpp include/AntNet/Map.h include/AntNet/ECS.h)
+        include/AntNet/System.h
+        include/AntNet/Handle.h
+        src/Game.cpp
+        include/AntNet/Game.h
+        include/AntNet/TextureManager.h
+        src/TextureManager.cpp
+        src/Map.cpp
+        include/AntNet/Map.h
+        include/AntNet/ECS/ECS.h
+        include/AntNet/ECS/SpriteComponent.h
+        include/AntNet/ECS/TransformComponent.h include/AntNet/Vector2D.h src/Vector2D.cpp include/AntNet/ECS/KeyboardController.h)
 
 target_include_directories(AntNet PRIVATE
         ${CMAKE_SOURCE_DIR}/include/

@@ -7,19 +7,18 @@
 
 #include <AntNet/Game.h>
 #include <AntNet/TextureManager.h>
-#include <AntNet/GameObject.h>
 #include <AntNet/Map.h>
-#include <AntNet/ECS.h>
-#include <AntNet/Components.h>
+#include <AntNet/ECS/Components.h>
+#include <AntNet/Vector2D.h>
 
 Map* map;
-GameObject* player;
-GameObject* enemy;
+Manager manager;
 
 SDL_Renderer* Game::renderer = nullptr;
 
-Manager manager;
-auto& new_player(manager.add_entity());
+const Uint8* Game::keyboard_state = nullptr;
+
+auto& player(manager.add_entity());
 
 Game::Game() : cnt(0) {
 
@@ -70,17 +69,19 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
         is_running = false;
         return;
     }
-    player = new GameObject("ant.png", 0, 0);
-    enemy = new GameObject("ant_enemy.png", 50, 50);
     map = new Map();
 
-    new_player.add_component<PositionComponent>();
+    player.add_component<TransformComponent>();
+    player.add_component<SpriteComponent>("ant.png");
+    player.add_component<KeyboardController>();
 }
 
 void Game::handle_events() {
-    SDL_Event e;
-    while (SDL_PollEvent(&e)) {
-        switch (e.type) {
+    Game::keyboard_state = SDL_GetKeyboardState(nullptr);
+
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
             case SDL_QUIT:
                 is_running = false;
                 break;
@@ -88,23 +89,18 @@ void Game::handle_events() {
                 break;
         }
     }
+
 }
 
 void Game::update() {
-    cnt++;
-    player->update();
-    enemy->update();
-
+    manager.refresh();
     manager.update();
-    std::cout << new_player.get_component<PositionComponent>().x() << ","
-              << new_player.get_component<PositionComponent>().y() << std::endl;
 }
 
 void Game::render() {
     SDL_RenderClear(Game::renderer);
     map->draw_map();
-    player->render();
-    enemy->render();
+    manager.draw();
     SDL_RenderPresent(Game::renderer);
 }
 

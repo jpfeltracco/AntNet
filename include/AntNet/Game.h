@@ -21,6 +21,7 @@ public:
     bool running();
 
     static SDL_Renderer* renderer;
+    const static Uint8* keyboard_state;
 
 private:
     int cnt;
