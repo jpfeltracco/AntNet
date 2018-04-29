@@ -10,6 +10,7 @@
 #include <AntNet/Map.h>
 #include <AntNet/ECS/Components.h>
 #include <AntNet/Vector2D.h>
+#include <AntNet/Collision.h>
 
 Map* map;
 Manager manager;
@@ -19,6 +20,7 @@ SDL_Renderer* Game::renderer = nullptr;
 const Uint8* Game::keyboard_state = nullptr;
 
 auto& player(manager.add_entity());
+auto& wall(manager.add_entity());
 
 Game::Game() : cnt(0) {
 
@@ -71,9 +73,14 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
     }
     map = new Map();
 
-    player.add_component<TransformComponent>();
+    player.add_component<TransformComponent>(2);
     player.add_component<SpriteComponent>("ant.png");
     player.add_component<KeyboardController>();
+    player.add_component<ColliderComponent>("player");
+
+    wall.add_component<TransformComponent>(300.0f, 300.0f, 300, 20, 1);
+    wall.add_component<SpriteComponent>("dirt.png");
+    wall.add_component<ColliderComponent>("wall");
 }
 
 void Game::handle_events() {
@@ -95,6 +102,13 @@ void Game::handle_events() {
 void Game::update() {
     manager.refresh();
     manager.update();
+
+    if (Collision::AABB(player.get_component<ColliderComponent>().collider,
+                        wall.get_component<ColliderComponent>().collider))
+    {
+        player.get_component<TransformComponent>().scale = 1;
+        std::cout << "Wall hit!" << std::endl;
+    }
 }
 
 void Game::render() {

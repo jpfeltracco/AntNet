@@ -10,6 +10,6 @@
 #include <AntNet/ECS/TransformComponent.h>
 #include <AntNet/ECS/SpriteComponent.h>
 #include <AntNet/ECS/KeyboardController.h>
-
+#include <AntNet/ECS/ColliderComponent.h>
 
 #endif //ANTNET_COMPONENT_H

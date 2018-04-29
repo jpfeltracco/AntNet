@@ -8,6 +8,7 @@
 #include <SDL2/SDL.h>
 
 #include <AntNet/ECS/Components.h>
+#include <AntNet/TextureManager.h>
 
 class SpriteComponent : public Component {
 private:
@@ -20,6 +21,10 @@ public:
         set_tex(path);
     }
 
+    ~SpriteComponent() {
+        SDL_DestroyTexture(texture);
+    }
+
     void set_tex(const char* path) {
         texture = TextureManager::load_texture(path);
     }
@@ -28,13 +33,15 @@ public:
         transform = &entity->get_component<TransformComponent>();
 
         src_rect.x = src_rect.y  = 0;
-        src_rect.w = src_rect.h = 32;
-        dest_rect.h = dest_rect.w = 64;
+        src_rect.w = transform->width;
+        src_rect.h = transform->height;
     }
 
     void update() override {
         dest_rect.x = static_cast<int>(transform->position.x);
         dest_rect.y = static_cast<int>(transform->position.y);
+        dest_rect.w = transform->width * transform->scale;
+        dest_rect.h = transform->height * transform->scale;
     }
 
     void draw() override {

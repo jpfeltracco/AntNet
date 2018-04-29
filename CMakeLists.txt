@@ -30,7 +30,7 @@ add_executable(AntNet
         include/AntNet/Map.h
         include/AntNet/ECS/ECS.h
         include/AntNet/ECS/SpriteComponent.h
-        include/AntNet/ECS/TransformComponent.h include/AntNet/Vector2D.h src/Vector2D.cpp include/AntNet/ECS/KeyboardController.h)
+        include/AntNet/ECS/TransformComponent.h include/AntNet/Vector2D.h src/Vector2D.cpp include/AntNet/ECS/KeyboardController.h include/AntNet/ECS/TileComponent.h include/AntNet/ECS/ColliderComponent.h include/AntNet/Collision.h src/Collision.cpp)
 
 target_include_directories(AntNet PRIVATE
         ${CMAKE_SOURCE_DIR}/include/
