@@ -9,6 +9,7 @@
 
 #include <SDL2/SDL.h>
 
+#include <AntNet/Game.h>
 #include <AntNet/ECS/ECS.h>
 #include <AntNet/ECS/Components.h>
 
@@ -28,6 +29,8 @@ public:
             entity->add_component<TransformComponent>();
         }
         transform = &entity->get_component<TransformComponent>();
+
+        Game::colliders.push_back(this);
     }
 
     void update() override {

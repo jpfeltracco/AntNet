@@ -18,7 +18,7 @@ public:
     SDL_Rect tile_rect;
     int tileID;
 
-    char* path;
+    const char* path;
 
     TileComponent() = default;
 
@@ -32,13 +32,13 @@ public:
 
         switch (tileID) {
             case 0:
-                path = static_cast<char*>("water.png");
+                path = "water.png";
                 break;
             case 1:
-                path = static_cast<char*>("dirt.png");
+                path = "dirt.png";
                 break;
             case 2:
-                path = static_cast<char*>("grass.png");
+                path = "grass.png";
                 break;
             default:
                 break;
@@ -46,7 +46,13 @@ public:
     }
 
     void init() override {
-        entity->add_component<TransformComponent>(tile_rect.x, tile_rect.y, tile_rect.w, tile_rect.h, 1);
+        entity->add_component<TransformComponent>(static_cast<float>(tile_rect.x),
+                                                  static_cast<float>(tile_rect.y),
+                                                  tile_rect.w, tile_rect.h, 1);
+        transform = &entity->get_component<TransformComponent>();
+
+        entity->add_component<SpriteComponent>(path);
+        sprite = &entity->get_component<SpriteComponent>();
     }
 };
 

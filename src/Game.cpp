@@ -16,11 +16,16 @@ Map* map;
 Manager manager;
 
 SDL_Renderer* Game::renderer = nullptr;
-
 const Uint8* Game::keyboard_state = nullptr;
+
+std::vector<ColliderComponent*> Game::colliders;
 
 auto& player(manager.add_entity());
 auto& wall(manager.add_entity());
+
+auto& tile0(manager.add_entity());
+auto& tile1(manager.add_entity());
+auto& tile2(manager.add_entity());
 
 Game::Game() : cnt(0) {
 
@@ -73,12 +78,18 @@ void Game::init(const char* title, int xpos, int ypos, int width, int height, bo
     }
     map = new Map();
 
+    tile0.add_component<TileComponent>(200, 200, 32, 32, 0);
+    tile1.add_component<TileComponent>(250, 200, 32, 32, 1);
+    tile1.add_component<ColliderComponent>("dirt");
+    tile2.add_component<TileComponent>(200, 250, 32, 32, 2);
+    tile2.add_component<ColliderComponent>("grass");
+
     player.add_component<TransformComponent>(2);
     player.add_component<SpriteComponent>("ant.png");
     player.add_component<KeyboardController>();
     player.add_component<ColliderComponent>("player");
 
-    wall.add_component<TransformComponent>(300.0f, 300.0f, 300, 20, 1);
+    wall.add_component<TransformComponent>(300, 300, 300, 20, 1);
     wall.add_component<SpriteComponent>("dirt.png");
     wall.add_component<ColliderComponent>("wall");
 }
@@ -103,17 +114,17 @@ void Game::update() {
     manager.refresh();
     manager.update();
 
-    if (Collision::AABB(player.get_component<ColliderComponent>().collider,
-                        wall.get_component<ColliderComponent>().collider))
-    {
-        player.get_component<TransformComponent>().scale = 1;
-        std::cout << "Wall hit!" << std::endl;
+    for (auto& c : colliders) {
+        if (Collision::AABB(player.get_component<ColliderComponent>(), *c))
+        {
+        }
     }
+
 }
 
 void Game::render() {
     SDL_RenderClear(Game::renderer);
-    map->draw_map();
+//    map->draw_map();
     manager.draw();
     SDL_RenderPresent(Game::renderer);
 }

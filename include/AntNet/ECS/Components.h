@@ -11,5 +11,6 @@
 #include <AntNet/ECS/SpriteComponent.h>
 #include <AntNet/ECS/KeyboardController.h>
 #include <AntNet/ECS/ColliderComponent.h>
+#include <AntNet/ECS/TileComponent.h>
 
 #endif //ANTNET_COMPONENT_H

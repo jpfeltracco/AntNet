@@ -5,7 +5,11 @@
 #ifndef ANTNET_GAME_H
 #define ANTNET_GAME_H
 
+#include <vector>
+
 #include <SDL2/SDL.h>
+
+class ColliderComponent;
 
 class Game {
 public:
@@ -22,6 +26,8 @@ public:
 
     static SDL_Renderer* renderer;
     const static Uint8* keyboard_state;
+
+    static std::vector<ColliderComponent*> colliders;
 
 private:
     int cnt;

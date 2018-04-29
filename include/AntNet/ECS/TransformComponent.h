@@ -19,9 +19,9 @@ public:
 
     int speed = 3;
 
-    TransformComponent() : position(0.0f, 0.0f) { }
+    TransformComponent() { }
 
-    TransformComponent(int sc) : position(0.0f, 0.0f), scale(sc) { }
+    TransformComponent(int sc) : scale(sc) { }
 
     TransformComponent(float x, float y) : position(x, y) { }
 
