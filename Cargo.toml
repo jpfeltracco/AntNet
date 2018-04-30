@@ -1,0 +1,6 @@
+[package]
+name = "specs_tut"
+version = "0.1.0"
+authors = ["Jeremy Feltracco <jpfeltracco@gatech.edu>"]
+
+[dependencies]
