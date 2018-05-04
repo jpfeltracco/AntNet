@@ -4,3 +4,11 @@ version = "0.1.0"
 authors = ["Jeremy Feltracco <jpfeltracco@gatech.edu>"]
 
 [dependencies]
+specs = "0.11.0-alpha5"
+rayon = "1.0"
+rand = "0.4.2"
+
+[dependencies.sdl2]
+version = "0.31"
+default-features = false
+features = ["ttf","image","gfx","mixer"]
