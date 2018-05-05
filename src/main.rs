@@ -138,27 +138,19 @@ mod game_of_life {
     }
 }
 
+fn block<'a>(canvas: &mut Canvas<Window>, texture_creator: &'a TextureCreator<WindowContext>, col: color::Type) -> Texture<'a> {
+    let mut texture = texture_creator.create_texture_target(None, SQUARE_SIZE, SQUARE_SIZE).unwrap();
+    
+    canvas.with_texture_canvas(&mut texture, |texture_canvas| {
+        texture_canvas.set_draw_color(color::get(col));
+        texture_canvas.clear();
+    }).unwrap();
+
+    return texture;
+}
+
 fn dummy_texture<'a>(canvas: &mut Canvas<Window>, texture_creator: &'a TextureCreator<WindowContext>) -> (Texture<'a>, Texture<'a>) {
-    enum TextureColor {
-        Yellow,
-        White,
-    };
-    let mut square_texture1 : Texture =
-        texture_creator.create_texture_target(None, SQUARE_SIZE, SQUARE_SIZE).unwrap();
-    let mut square_texture2 : Texture =
-        texture_creator.create_texture_target(None, SQUARE_SIZE, SQUARE_SIZE).unwrap();
-        // let's change the textures we just created
-    {
-        let textures = vec![
-            (&mut square_texture1, TextureColor::Yellow),
-            (&mut square_texture2, TextureColor::White)
-        ];
-        canvas.with_multiple_texture_canvas(textures.iter(), |texture_canvas, user_context| {
-            texture_canvas.set_draw_color(color::get(color::Type::Green));
-            texture_canvas.clear();
-        }).unwrap();
-    }
-    (square_texture1, square_texture2)
+    return (block(canvas, texture_creator, color::Type::Blue), block(canvas, texture_creator, color::Type::Blue));
 }
 
 pub fn main() {
