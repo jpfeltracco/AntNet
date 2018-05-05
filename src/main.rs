@@ -14,6 +14,7 @@ mod color {
     use sdl2::pixels::Color;
 
     pub enum Type {
+        Black,
         Green,
         Brown,
         Blue,
@@ -21,6 +22,7 @@ mod color {
 
     pub fn get(color_type: Type) -> Color {
         match color_type {
+            Type::Black => Color::RGB(0, 0, 0),
             Type::Green => Color::RGB(0, 255, 0),
             Type::Brown => Color::RGB(139, 69, 19),
             Type::Blue => Color::RGB(0, 0, 255),
@@ -152,16 +154,8 @@ fn dummy_texture<'a>(canvas: &mut Canvas<Window>, texture_creator: &'a TextureCr
             (&mut square_texture2, TextureColor::White)
         ];
         canvas.with_multiple_texture_canvas(textures.iter(), |texture_canvas, user_context| {
-            texture_canvas.set_draw_color(Color::RGB(0, 0, 0));
+            texture_canvas.set_draw_color(color::get(color::Type::Green));
             texture_canvas.clear();
-            for i in 0..SQUARE_SIZE {
-                for j in 0..SQUARE_SIZE {
-                    // drawing pixel by pixel isn't very effective, but we only do it once and store
-                    // the texture afterwards so it's still alright!
-                    texture_canvas.set_draw_color(color::get(color::Type::Green));
-                    texture_canvas.draw_point(Point::new(i as i32, j as i32)).unwrap();
-                }
-            }
         }).unwrap();
     }
     (square_texture1, square_texture2)
