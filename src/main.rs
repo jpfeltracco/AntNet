@@ -1,23 +1,94 @@
 
+extern crate rand;
+extern crate rayon;
+extern crate specs;
 extern crate sdl2;
 
-use sdl2::rect::{Point, Rect};
+
+use rayon::iter::ParallelIterator;
+
+use specs::prelude::*;
+
+// use sdl2::rect::{Point, Rect};
+use sdl2::rect::Rect;
 use sdl2::pixels::Color;
 use sdl2::event::Event;
 use sdl2::mouse::MouseButton;
 use sdl2::keyboard::Keycode;
 use sdl2::video::{Window, WindowContext};
 use sdl2::render::{Canvas, Texture, TextureCreator};
+
+
+mod game_of_life;
 use game_of_life::{SQUARE_SIZE, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT};
+
+#[derive(Debug, Clone)]
+struct Pos(f32, f32);
+impl Component for Pos {
+    // This uses `VecStorage`, because all entities have a position.
+    type Storage = VecStorage<Self>;
+}
+
+#[derive(Debug)]
+struct Vel(f32, f32);
+impl Component for Vel {
+    // This uses `DenseVecStorage`, because nearly all entities have a velocity.
+    type Storage = DenseVecStorage<Self>;
+}
+
+#[derive(Debug, Clone, Copy)]
+struct BlockColor {
+    id: color::Type,
+}
+impl Component for BlockColor {
+    type Storage = DenseVecStorage<Self>;
+}
+
+struct RenderSystem {
+    texture_ids: Vec<color::Type>,
+}
+impl<'a> System<'a> for RenderSystem {
+    type SystemData = ReadStorage<'a, BlockColor>;
+
+    fn run(&mut self, texture_block_color: Self::SystemData) {
+        for texture in (&texture_block_color).join() {
+            self.texture_ids.push(texture.id);
+        }
+    }
+}
+
+impl RenderSystem {
+    fn new() -> Self {
+        return Self { texture_ids: Vec::new() }
+    }
+
+    fn get_textures(self) -> Vec<color::Type> {
+        return self.texture_ids;
+    }
+}
+
+struct PhysicsSystem;
+impl<'a> System<'a> for PhysicsSystem {
+    type SystemData = (WriteStorage<'a, Pos>, ReadStorage<'a, Vel>);
+
+    fn run(&mut self, (mut pos, vel): Self::SystemData) {
+        (&mut pos, &vel).par_join().for_each(|(pos, vel)| {
+            pos.0 += vel.0;
+            pos.1 += vel.1;
+        });
+    }
+}
 
 mod color {
     use sdl2::pixels::Color;
 
+    #[derive(Debug, Clone, Copy)]
     pub enum Type {
         Black,
         Green,
         Brown,
         Blue,
+        White,
     }
 
     pub fn get(color_type: Type) -> Color {
@@ -26,119 +97,13 @@ mod color {
             Type::Green => Color::RGB(0, 255, 0),
             Type::Brown => Color::RGB(139, 69, 19),
             Type::Blue => Color::RGB(0, 0, 255),
+            Type::White => Color::RGB(255, 255, 255),
         }
     }
 
 }
 
-
-mod game_of_life {
-    pub const SQUARE_SIZE: u32 = 16;
-    pub const PLAYGROUND_WIDTH: u32 = 49;
-    pub const PLAYGROUND_HEIGHT: u32 = 40;
-
-    #[derive(Copy, Clone)]
-    pub enum State {
-        Paused,
-        Playing,
-    }
-
-    pub struct GameOfLife {
-        playground: [bool; (PLAYGROUND_WIDTH*PLAYGROUND_HEIGHT) as usize],
-        state: State,
-    }
-
-    impl GameOfLife {
-        pub fn new() -> GameOfLife {
-            let mut playground = [false; (PLAYGROUND_WIDTH * PLAYGROUND_HEIGHT) as usize];
-
-            // let's make a nice default pattern !
-            for i in 1..(PLAYGROUND_HEIGHT-1) {
-                playground[(1 + i* PLAYGROUND_WIDTH) as usize] = true;
-                playground[((PLAYGROUND_WIDTH-2) + i* PLAYGROUND_WIDTH) as usize] = true;
-            }
-            for j in 2..(PLAYGROUND_WIDTH-2) {
-                playground[(PLAYGROUND_WIDTH + j) as usize] = true;
-                playground[((PLAYGROUND_HEIGHT-2)*PLAYGROUND_WIDTH + j) as usize] = true;
-            }
-
-            GameOfLife {
-                playground: playground,
-                state: State::Paused,
-            }
-        }
-
-        pub fn get(&self, x: i32, y: i32) -> Option<bool> {
-            if x >= 0 && y >= 0 &&
-               (x as u32) < PLAYGROUND_WIDTH && (y as u32) < PLAYGROUND_HEIGHT {
-                Some(self.playground[(x as u32 + (y as u32)* PLAYGROUND_WIDTH) as usize])
-            } else {
-                None
-            }
-        }
-
-        pub fn get_mut(&mut self, x: i32, y: i32) -> Option<&mut bool> {
-            if x >= 0 && y >= 0 &&
-               (x as u32) < PLAYGROUND_WIDTH && (y as u32) < PLAYGROUND_HEIGHT {
-                Some(&mut self.playground[(x as u32 + (y as u32)* PLAYGROUND_WIDTH) as usize])
-            } else {
-                None
-            }
-        }
-
-        pub fn toggle_state(&mut self) {
-            self.state = match self.state {
-                State::Paused => State::Playing,
-                State::Playing => State::Paused,
-            }
-        }
-
-        pub fn state(&self) -> State {
-            self.state
-        }
-
-        pub fn update(&mut self) {
-            let mut new_playground = self.playground;
-            for (u, square) in new_playground.iter_mut().enumerate() {
-                let u = u as u32;
-                let x = u % PLAYGROUND_WIDTH;
-                let y = u / PLAYGROUND_WIDTH;
-                let mut count : u32 = 0;
-                for i in -1..2 {
-                    for j in -1..2 {
-                        if !(i == 0 && j == 0) {
-                            let peek_x : i32 = (x as i32) + i;
-                            let peek_y : i32 = (y as i32) + j;
-                            if let Some(true) = self.get(peek_x, peek_y) {
-                                count += 1;
-                            }
-                        }
-                    }
-                }
-                if count > 3 || count < 2 {
-                    *square = false;
-                } else if count == 3 {
-                    *square = true;
-                } else if count == 2 {
-                    *square = *square;
-                }
-            }
-            self.playground = new_playground;
-        }
-    }
-
-
-
-    impl<'a> IntoIterator for &'a GameOfLife {
-        type Item = &'a bool;
-        type IntoIter = ::std::slice::Iter<'a, bool>;
-        fn into_iter(self) -> ::std::slice::Iter<'a, bool> {
-            self.playground.iter()
-        }
-    }
-}
-
-fn block<'a>(canvas: &mut Canvas<Window>, texture_creator: &'a TextureCreator<WindowContext>, col: color::Type) -> Texture<'a> {
+fn texture_block<'a>(canvas: &mut Canvas<Window>, texture_creator: &'a TextureCreator<WindowContext>, col: color::Type) -> Texture<'a> {
     let mut texture = texture_creator.create_texture_target(None, SQUARE_SIZE, SQUARE_SIZE).unwrap();
     
     canvas.with_texture_canvas(&mut texture, |texture_canvas| {
@@ -147,10 +112,6 @@ fn block<'a>(canvas: &mut Canvas<Window>, texture_creator: &'a TextureCreator<Wi
     }).unwrap();
 
     return texture;
-}
-
-fn dummy_texture<'a>(canvas: &mut Canvas<Window>, texture_creator: &'a TextureCreator<WindowContext>) -> (Texture<'a>, Texture<'a>) {
-    return (block(canvas, texture_creator, color::Type::Blue), block(canvas, texture_creator, color::Type::Blue));
 }
 
 pub fn main() {
@@ -177,7 +138,7 @@ pub fn main() {
         .build().unwrap();
 
     println!("Using SDL_Renderer \"{}\"", canvas.info().name);
-    canvas.set_draw_color(Color::RGB(255, 255, 255));
+    canvas.set_draw_color(color::get(color::Type::White));
     // clears the canvas with the color we set in `set_draw_color`.
     canvas.clear();
     // However the canvas has not been updated to the window yet, everything has been processed to
@@ -185,12 +146,27 @@ pub fn main() {
     // `present`. We need to call this everytime we want to render a new frame on the window.
     canvas.present();
 
+    let mut world = World::new();
+    world.register::<BlockColor>();
+
+    world
+        .create_entity()
+        .with(Pos(1., 4.))
+        .with(BlockColor{ id: color::Type::Black })
+        .build();
+
+    let mut render_sys = RenderSystem::new();
+    let mut resources = specs::prelude::Resources::new();
+
     // this struct manages textures. For lifetime reasons, the canvas cannot directly create
     // textures, you have to create a `TextureCreator` instead.
     let texture_creator : TextureCreator<_> = canvas.texture_creator();
 
     // Create a "target" texture so that we can use our Renderer with it later
-    let (square_texture1, square_texture2) = dummy_texture(&mut canvas, &texture_creator);
+    let _grass_tex = texture_block(&mut canvas, &texture_creator, color::Type::Green);
+    let dirt_tex = texture_block(&mut canvas, &texture_creator, color::Type::Brown);
+    let water_tex = texture_block(&mut canvas, &texture_creator, color::Type::Blue);
+
     let mut game = game_of_life::GameOfLife::new();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
@@ -217,33 +193,41 @@ pub fn main() {
             }
         }
 
-        // update the game loop here
-        if frame >= 3 {
-            game.update();
-            frame = 0;
+        render_sys.run_now(&mut resources);
+
+        let texts = render_sys.get_textures();
+        for text_color in texts {
+
         }
 
-        canvas.set_draw_color(Color::RGB(255, 255, 255));
-        canvas.clear();
-        for (i, unit) in (&game).into_iter().enumerate() {
-            let i = i as u32;
-            let square_texture = if frame >= 15 {
-                &square_texture1
-            } else {
-                &square_texture2
-            };
-            if *unit {
-                canvas.copy(square_texture,
-                            None,
-                            Rect::new(((i % PLAYGROUND_WIDTH) * SQUARE_SIZE) as i32,
-                                      ((i / PLAYGROUND_WIDTH) * SQUARE_SIZE) as i32,
-                                      SQUARE_SIZE,
-                                      SQUARE_SIZE)).unwrap();
-            }
-        }
-        canvas.present();
-        if let game_of_life::State::Playing = game.state() {
-            frame += 1;
-        };
+
+        // update the game loop here
+        // if frame >= 3 {
+            // game.update();
+            // frame = 0;
+        // }
+
+        // canvas.set_draw_color(Color::RGB(255, 255, 255));
+        // canvas.clear();
+        // for (i, unit) in (&game).into_iter().enumerate() {
+            // let i = i as u32;
+            // let square_texture = if frame >= 15 {
+                // &dirt_tex
+            // } else {
+                // &water_tex
+            // };
+            // if *unit {
+                // canvas.copy(square_texture,
+                            // None,
+                            // Rect::new(((i % PLAYGROUND_WIDTH) * SQUARE_SIZE) as i32,
+                                      // ((i / PLAYGROUND_WIDTH) * SQUARE_SIZE) as i32,
+                                      // SQUARE_SIZE,
+                                      // SQUARE_SIZE)).unwrap();
+            // }
+        // }
+        // canvas.present();
+        // if let game_of_life::State::Playing = game.state() {
+            // frame += 1;
+        // };
     }
 }
