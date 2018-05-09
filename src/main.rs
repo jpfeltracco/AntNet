@@ -20,8 +20,8 @@ use sdl2::keyboard::Keycode;
 use sdl2::video::{Window, WindowContext};
 use sdl2::render::{Canvas, Texture, TextureCreator};
 
-mod game_of_life;
-use game_of_life::{SQUARE_SIZE, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT};
+mod ant_sim;
+use ant_sim::{SQUARE_SIZE, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT};
 
 #[derive(Debug, Copy, Clone)]
 struct Pos(i32, i32);
@@ -196,7 +196,7 @@ pub fn main() {
     let dirt_tex = texture_block(&mut canvas, &texture_creator, color::Type::Brown);
     let water_tex = texture_block(&mut canvas, &texture_creator, color::Type::Blue);
 
-    let mut game = game_of_life::GameOfLife::new();
+    let mut game = ant_sim::AntGame::new();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
     let mut frame : u32 = 0;
@@ -254,7 +254,7 @@ pub fn main() {
             // frame = 0;
         // }
 
-        // if let game_of_life::State::Playing = game.state() {
+        // if let ant_sim::State::Playing = game.state() {
             // frame += 1;
         // };
     }

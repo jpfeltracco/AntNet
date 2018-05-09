@@ -8,13 +8,13 @@ pub enum State {
     Playing,
 }
 
-pub struct GameOfLife {
+pub struct AntGame {
     playground: [bool; (PLAYGROUND_WIDTH*PLAYGROUND_HEIGHT) as usize],
     state: State,
 }
 
-impl GameOfLife {
-    pub fn new() -> GameOfLife {
+impl AntGame {
+    pub fn new() -> AntGame {
         let mut playground = [false; (PLAYGROUND_WIDTH * PLAYGROUND_HEIGHT) as usize];
 
         // let's make a nice default pattern !
@@ -27,7 +27,7 @@ impl GameOfLife {
             playground[((PLAYGROUND_HEIGHT-2)*PLAYGROUND_WIDTH + j) as usize] = true;
         }
 
-        GameOfLife {
+        AntGame {
             playground: playground,
             state: State::Paused,
         }
@@ -94,7 +94,7 @@ impl GameOfLife {
 
 
 
-impl<'a> IntoIterator for &'a GameOfLife {
+impl<'a> IntoIterator for &'a AntGame {
     type Item = &'a bool;
     type IntoIter = ::std::slice::Iter<'a, bool>;
     fn into_iter(self) -> ::std::slice::Iter<'a, bool> {
