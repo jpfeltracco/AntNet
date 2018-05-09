@@ -4,8 +4,6 @@ extern crate rayon;
 extern crate specs;
 extern crate sdl2;
 
-use std::borrow::Borrow;
-
 use rayon::iter::ParallelIterator;
 
 use specs::prelude::*;
@@ -163,17 +161,17 @@ pub fn main() {
     world
         .create_entity()
         .with(Pos(7, 4))
-        .with(BlockColor{ id: color::Type::Black })
+        .with(BlockColor{ id: color::Type::Green })
         .build();
     world
         .create_entity()
         .with(Pos(0, 0))
-        .with(BlockColor{ id: color::Type::Black })
+        .with(BlockColor{ id: color::Type::Brown })
         .build();
     world
         .create_entity()
         .with(Pos(1, 10))
-        .with(BlockColor{ id: color::Type::Black })
+        .with(BlockColor{ id: color::Type::Blue })
         .build();
 
 
@@ -194,12 +192,12 @@ pub fn main() {
     // Create a "target" texture so that we can use our Renderer with it later
     let _grass_tex = texture_block(&mut canvas, &texture_creator, color::Type::Green);
     let dirt_tex = texture_block(&mut canvas, &texture_creator, color::Type::Brown);
-    let water_tex = texture_block(&mut canvas, &texture_creator, color::Type::Blue);
+    let _water_tex = texture_block(&mut canvas, &texture_creator, color::Type::Blue);
 
     let mut game = ant_sim::AntGame::new();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
-    let mut frame : u32 = 0;
+    // let mut frame : u32 = 0;
     'running: loop {
         // get the inputs here
         for event in event_pump.poll_iter() {
@@ -232,8 +230,10 @@ pub fn main() {
         canvas.set_draw_color(Color::RGB(255, 255, 255));
         canvas.clear();
 
+        // shouldn't be building textures every single time we need them, need a way to cache
         for (bc, pos) in color_pos.vec.clone() {
-            canvas.copy(&dirt_tex, None,
+            let tex = texture_block(&mut canvas, &texture_creator, bc.id);
+            canvas.copy(&tex, None,
                             Rect::new(((pos.0 % PLAYGROUND_WIDTH as i32) * SQUARE_SIZE as i32) as i32,
                                       ((pos.1 % PLAYGROUND_WIDTH as i32) * SQUARE_SIZE as i32) as i32,
                                       SQUARE_SIZE,
