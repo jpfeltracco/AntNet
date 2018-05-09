@@ -229,6 +229,7 @@ pub fn main() {
         let color_pos = world.read_resource::<ColorPos>();
 
         // rendering
+        canvas.set_draw_color(Color::RGB(255, 255, 255));
         canvas.clear();
 
         for (bc, pos) in color_pos.vec.clone() {
@@ -247,32 +248,12 @@ pub fn main() {
             
         // }
 
-
         // update the game loop here
         // if frame >= 3 {
             // game.update();
             // frame = 0;
         // }
 
-        // canvas.set_draw_color(Color::RGB(255, 255, 255));
-        // canvas.clear();
-        // for (i, unit) in (&game).into_iter().enumerate() {
-            // let i = i as u32;
-            // let square_texture = if frame >= 15 {
-                // &dirt_tex
-            // } else {
-                // &water_tex
-            // };
-            // if *unit {
-                // canvas.copy(square_texture,
-                            // None,
-                            // Rect::new(((i % PLAYGROUND_WIDTH) * SQUARE_SIZE) as i32,
-                                      // ((i / PLAYGROUND_WIDTH) * SQUARE_SIZE) as i32,
-                                      // SQUARE_SIZE,
-                                      // SQUARE_SIZE)).unwrap();
-            // }
-        // }
-        // canvas.present();
         // if let game_of_life::State::Playing = game.state() {
             // frame += 1;
         // };
