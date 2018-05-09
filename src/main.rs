@@ -4,10 +4,12 @@ extern crate rayon;
 extern crate specs;
 extern crate sdl2;
 
+use std::borrow::Borrow;
 
 use rayon::iter::ParallelIterator;
 
 use specs::prelude::*;
+// use specs::Read;
 
 // use sdl2::rect::{Point, Rect};
 use sdl2::rect::Rect;
@@ -18,19 +20,18 @@ use sdl2::keyboard::Keycode;
 use sdl2::video::{Window, WindowContext};
 use sdl2::render::{Canvas, Texture, TextureCreator};
 
-
 mod game_of_life;
 use game_of_life::{SQUARE_SIZE, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT};
 
 #[derive(Debug, Copy, Clone)]
-struct Pos(f32, f32);
+struct Pos(i32, i32);
 impl Component for Pos {
     // This uses `VecStorage`, because all entities have a position.
     type Storage = VecStorage<Self>;
 }
 
 #[derive(Debug)]
-struct Vel(f32, f32);
+struct Vel(i32, i32);
 impl Component for Vel {
     // This uses `DenseVecStorage`, because nearly all entities have a velocity.
     type Storage = DenseVecStorage<Self>;
@@ -44,27 +45,19 @@ impl Component for BlockColor {
     type Storage = DenseVecStorage<Self>;
 }
 
+
 struct RenderSystem {
-    texture_ids: Vec<(BlockColor, Pos)>,
+    // texture_ids: ColorPos,
 }
 impl<'a> System<'a> for RenderSystem {
-    type SystemData = (ReadStorage<'a, BlockColor>, ReadStorage<'a, Pos>);
+    type SystemData = (Write<'a, ColorPos>, ReadStorage<'a, BlockColor>, ReadStorage<'a, Pos>);
 
-    fn run(&mut self, (mut texture, mut pos): Self::SystemData) {
-        (&mut texture, &mut pos).par_join().for_each(|(tex, pos)| {
-            let tup = (tex.clone(), pos.clone());
-            self.texture_ids.push(tup);
-        });
-    }
-}
+    fn run(&mut self, data: Self::SystemData) {
+        let (mut block_color, texture, pos) = data;
 
-impl RenderSystem {
-    fn new() -> Self {
-        return Self { texture_ids: Vec::new() }
-    }
-
-    fn get_textures(&self) -> Vec<(BlockColor, Pos)> {
-        return self.texture_ids.clone();
+        for (tex, pos) in (&texture, &pos).join() {
+            block_color.vec.push((tex.clone(), pos.clone()));
+        }
     }
 }
 
@@ -92,6 +85,12 @@ mod color {
         White,
     }
 
+    impl Default for Type {
+        fn default() -> Type {
+            Type::Black
+        }
+    }
+
     pub fn get(color_type: Type) -> Color {
         match color_type {
             Type::Black => Color::RGB(0, 0, 0),
@@ -102,6 +101,11 @@ mod color {
         }
     }
 
+}
+
+#[derive(Default, Debug, Clone)]
+struct ColorPos {
+    vec: Vec<(BlockColor, Pos)>,
 }
 
 fn texture_block<'a>(canvas: &mut Canvas<Window>, texture_creator: &'a TextureCreator<WindowContext>, col: color::Type) -> Texture<'a> {
@@ -148,16 +152,40 @@ pub fn main() {
     canvas.present();
 
     let mut world = World::new();
+    world.register::<Pos>();
     world.register::<BlockColor>();
 
     world
         .create_entity()
-        .with(Pos(1., 4.))
+        .with(Pos(1, 4))
+        .with(BlockColor{ id: color::Type::Black })
+        .build();
+    world
+        .create_entity()
+        .with(Pos(7, 4))
+        .with(BlockColor{ id: color::Type::Black })
+        .build();
+    world
+        .create_entity()
+        .with(Pos(0, 0))
+        .with(BlockColor{ id: color::Type::Black })
+        .build();
+    world
+        .create_entity()
+        .with(Pos(1, 10))
         .with(BlockColor{ id: color::Type::Black })
         .build();
 
-    let mut render_sys = RenderSystem::new();
-    let mut resources = specs::prelude::Resources::new();
+
+    // struct DeltaTime(f32);
+    // world.add_resource(DeltaTime(0.05));
+    // let mut delta = world.write_resource::<DeltaTime>();
+
+    world.add_resource(ColorPos{ vec: Vec::new() });
+    // let mut color_pos = world.write_resource::<ColorPos>();
+
+
+    let mut render_sys = RenderSystem{};
 
     // this struct manages textures. For lifetime reasons, the canvas cannot directly create
     // textures, you have to create a `TextureCreator` instead.
@@ -194,12 +222,30 @@ pub fn main() {
             }
         }
 
-        render_sys.run_now(&mut resources);
+        // run systems
+        render_sys.run_now(&world.res);
 
-        let texts = render_sys.get_textures();
-        for text_color in texts {
-            
+        // get data out of systems
+        let color_pos = world.read_resource::<ColorPos>();
+
+        // rendering
+        canvas.clear();
+
+        for (bc, pos) in color_pos.vec.clone() {
+            canvas.copy(&dirt_tex, None,
+                            Rect::new(((pos.0 % PLAYGROUND_WIDTH as i32) * SQUARE_SIZE as i32) as i32,
+                                      ((pos.1 % PLAYGROUND_WIDTH as i32) * SQUARE_SIZE as i32) as i32,
+                                      SQUARE_SIZE,
+                                      SQUARE_SIZE)).unwrap();
         }
+
+        canvas.present();
+        // render_sys.run_now(&world.res);
+
+        // let texts = render_sys.get_textures();
+        // for text_color in texts {
+            
+        // }
 
 
         // update the game loop here
