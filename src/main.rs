@@ -22,7 +22,7 @@ use sdl2::render::{Canvas, Texture, TextureCreator};
 mod game_of_life;
 use game_of_life::{SQUARE_SIZE, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 struct Pos(f32, f32);
 impl Component for Pos {
     // This uses `VecStorage`, because all entities have a position.
@@ -45,15 +45,16 @@ impl Component for BlockColor {
 }
 
 struct RenderSystem {
-    texture_ids: Vec<color::Type>,
+    texture_ids: Vec<(BlockColor, Pos)>,
 }
 impl<'a> System<'a> for RenderSystem {
-    type SystemData = ReadStorage<'a, BlockColor>;
+    type SystemData = (ReadStorage<'a, BlockColor>, ReadStorage<'a, Pos>);
 
-    fn run(&mut self, texture_block_color: Self::SystemData) {
-        for texture in (&texture_block_color).join() {
-            self.texture_ids.push(texture.id);
-        }
+    fn run(&mut self, (mut texture, mut pos): Self::SystemData) {
+        (&mut texture, &mut pos).par_join().for_each(|(tex, pos)| {
+            let tup = (tex.clone(), pos.clone());
+            self.texture_ids.push(tup);
+        });
     }
 }
 
@@ -62,8 +63,8 @@ impl RenderSystem {
         return Self { texture_ids: Vec::new() }
     }
 
-    fn get_textures(self) -> Vec<color::Type> {
-        return self.texture_ids;
+    fn get_textures(&self) -> Vec<(BlockColor, Pos)> {
+        return self.texture_ids.clone();
     }
 }
 
@@ -197,7 +198,7 @@ pub fn main() {
 
         let texts = render_sys.get_textures();
         for text_color in texts {
-
+            
         }
 
 
