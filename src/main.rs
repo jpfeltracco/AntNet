@@ -21,18 +21,32 @@ use sdl2::render::{Canvas, Texture, TextureCreator};
 mod ant_sim;
 use ant_sim::{SQUARE_SIZE, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT};
 
+enum ArrowKey {
+    Up,
+    Down,
+    Left,
+    Right
+}
+
+#[derive(Default)]
+struct ArrowKeyEvent(Vec<ArrowKey>);
+
+// world.add_resource(ResizeEvents(Vec::new()));
+
+// while let Some(event) = window.poll_event() {
+    // match event {
+        // Input::Resize(x, y) => world.write_resource::<ResizeEvents>().0.push((x, y)),
+        // // ...
+    // }
+// }
+
+mod color;
+
 #[derive(Debug, Copy, Clone)]
 struct Pos(i32, i32);
 impl Component for Pos {
     // This uses `VecStorage`, because all entities have a position.
     type Storage = VecStorage<Self>;
-}
-
-#[derive(Debug)]
-struct Vel(i32, i32);
-impl Component for Vel {
-    // This uses `DenseVecStorage`, because nearly all entities have a velocity.
-    type Storage = DenseVecStorage<Self>;
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -43,62 +57,44 @@ impl Component for BlockColor {
     type Storage = DenseVecStorage<Self>;
 }
 
-
-struct RenderSystem {
-    // texture_ids: ColorPos,
+struct KeyboardController;
+impl Component for KeyboardController {
+    type Storage = DenseVecStorage<Self>;
 }
+
+struct KeyboardInputSystem;
+impl<'a> System<'a> for KeyboardInputSystem {
+    type SystemData = (Write<'a, ArrowKeyEvent>, WriteStorage<'a, Pos>, ReadStorage<'a, KeyboardController>);
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (mut key_event, mut positions, keyboard_controller) = data;
+
+        for e in &key_event.0 {
+            for (pos, _kc) in (&mut positions, &keyboard_controller).join() {
+                match e {
+                    &ArrowKey::Up => pos.1 -= 1,
+                    &ArrowKey::Down => pos.1 += 1,
+                    &ArrowKey::Left => pos.0 -= 1,
+                    &ArrowKey::Right => pos.0 += 1,
+                }
+            }
+        }
+        key_event.0.clear();
+    }
+}
+
+struct RenderSystem;
 impl<'a> System<'a> for RenderSystem {
     type SystemData = (Write<'a, ColorPos>, ReadStorage<'a, BlockColor>, ReadStorage<'a, Pos>);
 
     fn run(&mut self, data: Self::SystemData) {
         let (mut block_color, texture, pos) = data;
+        block_color.vec.clear();
 
         for (tex, pos) in (&texture, &pos).join() {
             block_color.vec.push((tex.clone(), pos.clone()));
         }
     }
-}
-
-struct PhysicsSystem;
-impl<'a> System<'a> for PhysicsSystem {
-    type SystemData = (WriteStorage<'a, Pos>, ReadStorage<'a, Vel>);
-
-    fn run(&mut self, (mut pos, vel): Self::SystemData) {
-        (&mut pos, &vel).par_join().for_each(|(pos, vel)| {
-            pos.0 += vel.0;
-            pos.1 += vel.1;
-        });
-    }
-}
-
-mod color {
-    use sdl2::pixels::Color;
-
-    #[derive(Debug, Clone, Copy)]
-    pub enum Type {
-        Black,
-        Green,
-        Brown,
-        Blue,
-        White,
-    }
-
-    impl Default for Type {
-        fn default() -> Type {
-            Type::Black
-        }
-    }
-
-    pub fn get(color_type: Type) -> Color {
-        match color_type {
-            Type::Black => Color::RGB(0, 0, 0),
-            Type::Green => Color::RGB(0, 255, 0),
-            Type::Brown => Color::RGB(139, 69, 19),
-            Type::Blue => Color::RGB(0, 0, 255),
-            Type::White => Color::RGB(255, 255, 255),
-        }
-    }
-
 }
 
 #[derive(Default, Debug, Clone)]
@@ -152,11 +148,13 @@ pub fn main() {
     let mut world = World::new();
     world.register::<Pos>();
     world.register::<BlockColor>();
+    world.register::<KeyboardController>();
 
     world
         .create_entity()
         .with(Pos(1, 4))
         .with(BlockColor{ id: color::Type::Black })
+        .with(KeyboardController)
         .build();
     world
         .create_entity()
@@ -180,10 +178,13 @@ pub fn main() {
     // let mut delta = world.write_resource::<DeltaTime>();
 
     world.add_resource(ColorPos{ vec: Vec::new() });
+
+    world.add_resource(ArrowKeyEvent(Vec::new()));
     // let mut color_pos = world.write_resource::<ColorPos>();
 
 
-    let mut render_sys = RenderSystem{};
+    let mut render_sys = RenderSystem;
+    let mut keyboard_sys = KeyboardInputSystem;
 
     // this struct manages textures. For lifetime reasons, the canvas cannot directly create
     // textures, you have to create a `TextureCreator` instead.
@@ -198,6 +199,12 @@ pub fn main() {
 
     let mut event_pump = sdl_context.event_pump().unwrap();
     // let mut frame : u32 = 0;
+// while let Some(event) = window.poll_event() {
+    // match event {
+        // Input::Resize(x, y) => world.write_resource::<ResizeEvents>().0.push((x, y)),
+        // // ...
+    // }
+// }
     'running: loop {
         // get the inputs here
         for event in event_pump.poll_iter() {
@@ -205,8 +212,17 @@ pub fn main() {
                 Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     break 'running
                 },
-                Event::KeyDown { keycode: Some(Keycode::Space), repeat: false, .. } => {
-                    game.toggle_state();
+                Event::KeyDown { keycode: Some(Keycode::Up), repeat: false, .. } => {
+                    world.write_resource::<ArrowKeyEvent>().0.push(ArrowKey::Up);
+                },
+                Event::KeyDown { keycode: Some(Keycode::Down), repeat: false, .. } => {
+                    world.write_resource::<ArrowKeyEvent>().0.push(ArrowKey::Down);
+                },
+                Event::KeyDown { keycode: Some(Keycode::Left), repeat: false, .. } => {
+                    world.write_resource::<ArrowKeyEvent>().0.push(ArrowKey::Left);
+                },
+                Event::KeyDown { keycode: Some(Keycode::Right), repeat: false, .. } => {
+                    world.write_resource::<ArrowKeyEvent>().0.push(ArrowKey::Right);
                 },
                 Event::MouseButtonDown { x, y, mouse_btn: MouseButton::Left, .. } => {
                     let x = (x as u32) / SQUARE_SIZE;
@@ -222,6 +238,7 @@ pub fn main() {
 
         // run systems
         render_sys.run_now(&world.res);
+        keyboard_sys.run_now(&world.res);
 
         // get data out of systems
         let color_pos = world.read_resource::<ColorPos>();
@@ -241,21 +258,5 @@ pub fn main() {
         }
 
         canvas.present();
-        // render_sys.run_now(&world.res);
-
-        // let texts = render_sys.get_textures();
-        // for text_color in texts {
-            
-        // }
-
-        // update the game loop here
-        // if frame >= 3 {
-            // game.update();
-            // frame = 0;
-        // }
-
-        // if let ant_sim::State::Playing = game.state() {
-            // frame += 1;
-        // };
     }
 }
