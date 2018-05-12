@@ -20,6 +20,8 @@ mod ant_sim;
 use ant_sim::{SQUARE_SIZE, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT};
 mod color;
 
+mod component;
+
 enum ArrowKey {
     Up,
     Down,
@@ -30,42 +32,9 @@ enum ArrowKey {
 #[derive(Default)]
 struct ArrowKeyEvent(Vec<ArrowKey>);
 
-#[derive(Default, Debug, Clone)]
-struct ColorPos {
-    vec: Vec<(BlockColor, Pos)>,
-}
-
-#[derive(Debug, Default)]
-struct CamPos(i32, i32);
-
-#[derive(Debug, Copy, Clone)]
-struct Pos(i32, i32);
-impl Component for Pos {
-    // This uses `VecStorage`, because all entities have a position.
-    type Storage = VecStorage<Self>;
-}
-
-#[derive(Debug, Clone, Copy)]
-struct BlockColor {
-    id: color::Type,
-}
-impl Component for BlockColor {
-    type Storage = DenseVecStorage<Self>;
-}
-
-struct KeyboardController;
-impl Component for KeyboardController {
-    type Storage = DenseVecStorage<Self>;
-}
-
-struct CameraFollower;
-impl Component for CameraFollower {
-    type Storage = DenseVecStorage<Self>;
-}
-
 struct CameraFollowerSystem;
 impl<'a> System<'a> for CameraFollowerSystem {
-    type SystemData = (Write<'a, CamPos>, ReadStorage<'a, Pos>, ReadStorage<'a, CameraFollower>);
+    type SystemData = (Write<'a, component::CamPos>, ReadStorage<'a, component::Pos>, ReadStorage<'a, component::CameraFollower>);
 
     fn run(&mut self, data: Self::SystemData) {
         let (mut cam_pos, positions, camera_followers) = data;
@@ -76,7 +45,7 @@ impl<'a> System<'a> for CameraFollowerSystem {
                 println!("You have multiple entities with a position and camera follower. This is bad");
                 break;
             }
-            *cam_pos = CamPos(pos.0, pos.1);
+            *cam_pos = component::CamPos(pos.0, pos.1);
             found_one = true;
         }
     }
@@ -84,7 +53,7 @@ impl<'a> System<'a> for CameraFollowerSystem {
 
 struct KeyboardInputSystem;
 impl<'a> System<'a> for KeyboardInputSystem {
-    type SystemData = (Write<'a, ArrowKeyEvent>, WriteStorage<'a, Pos>, ReadStorage<'a, KeyboardController>);
+    type SystemData = (Write<'a, ArrowKeyEvent>, WriteStorage<'a, component::Pos>, ReadStorage<'a, component::KeyboardController>);
 
     fn run(&mut self, data: Self::SystemData) {
         let (mut key_event, mut positions, keyboard_controller) = data;
@@ -105,7 +74,7 @@ impl<'a> System<'a> for KeyboardInputSystem {
 
 struct RenderSystem;
 impl<'a> System<'a> for RenderSystem {
-    type SystemData = (Write<'a, ColorPos>, ReadStorage<'a, BlockColor>, ReadStorage<'a, Pos>);
+    type SystemData = (Write<'a, component::ColorPos>, ReadStorage<'a, component::BlockColor>, ReadStorage<'a, component::Pos>);
 
     fn run(&mut self, data: Self::SystemData) {
         let (mut block_color, texture, pos) = data;
@@ -161,32 +130,32 @@ pub fn main() {
     canvas.present();
 
     let mut world = World::new();
-    world.register::<Pos>();
-    world.register::<BlockColor>();
-    world.register::<KeyboardController>();
-    world.register::<CameraFollower>();
+    world.register::<component::Pos>();
+    world.register::<component::BlockColor>();
+    world.register::<component::KeyboardController>();
+    world.register::<component::CameraFollower>();
 
     world
         .create_entity()
-        .with(Pos(1, 4))
-        .with(BlockColor{ id: color::Type::Black })
-        .with(KeyboardController)
-        .with(CameraFollower)
+        .with(component::Pos(1, 4))
+        .with(component::BlockColor{ id: color::Type::Black })
+        .with(component::KeyboardController)
+        .with(component::CameraFollower)
         .build();
     world
         .create_entity()
-        .with(Pos(7, 4))
-        .with(BlockColor{ id: color::Type::Green })
+        .with(component::Pos(7, 4))
+        .with(component::BlockColor{ id: color::Type::Green })
         .build();
     world
         .create_entity()
-        .with(Pos(0, 0))
-        .with(BlockColor{ id: color::Type::Brown })
+        .with(component::Pos(0, 0))
+        .with(component::BlockColor{ id: color::Type::Brown })
         .build();
     world
         .create_entity()
-        .with(Pos(1, 10))
-        .with(BlockColor{ id: color::Type::Blue })
+        .with(component::Pos(1, 10))
+        .with(component::BlockColor{ id: color::Type::Blue })
         .build();
 
 
@@ -194,11 +163,11 @@ pub fn main() {
     // world.add_resource(DeltaTime(0.05));
     // let mut delta = world.write_resource::<DeltaTime>();
 
-    world.add_resource(ColorPos{ vec: Vec::new() });
+    world.add_resource(component::ColorPos{ vec: Vec::new() });
 
     world.add_resource(ArrowKeyEvent(Vec::new()));
     
-    world.add_resource(CamPos(0, 0));
+    world.add_resource(component::CamPos(0, 0));
 
     let mut render_sys = RenderSystem;
     let mut keyboard_sys = KeyboardInputSystem;
@@ -254,11 +223,11 @@ pub fn main() {
         cam_follow_sys.run_now(&world.res);
 
         // get data out of systems
-        let color_pos = world.read_resource::<ColorPos>();
+        let color_pos = world.read_resource::<component::ColorPos>();
 
-        let cam_pos = world.read_resource::<CamPos>();
+        let cam_pos = world.read_resource::<component::CamPos>();
 
-        println!("Cam Pos {:?}", *cam_pos);
+        println!("Cam component::Pos {:?}", *cam_pos);
         println!("Canvas size? {:?}", canvas.output_size());
 
         // rendering
