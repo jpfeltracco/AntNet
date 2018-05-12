@@ -4,12 +4,10 @@ extern crate rayon;
 extern crate specs;
 extern crate sdl2;
 
-use rayon::iter::ParallelIterator;
+// use rayon::iter::ParallelIterator;
 
 use specs::prelude::*;
-// use specs::Read;
 
-// use sdl2::rect::{Point, Rect};
 use sdl2::rect::Rect;
 use sdl2::pixels::Color;
 use sdl2::event::Event;
@@ -20,6 +18,7 @@ use sdl2::render::{Canvas, Texture, TextureCreator};
 
 mod ant_sim;
 use ant_sim::{SQUARE_SIZE, PLAYGROUND_WIDTH, PLAYGROUND_HEIGHT};
+mod color;
 
 enum ArrowKey {
     Up,
@@ -31,16 +30,13 @@ enum ArrowKey {
 #[derive(Default)]
 struct ArrowKeyEvent(Vec<ArrowKey>);
 
-// world.add_resource(ResizeEvents(Vec::new()));
+#[derive(Default, Debug, Clone)]
+struct ColorPos {
+    vec: Vec<(BlockColor, Pos)>,
+}
 
-// while let Some(event) = window.poll_event() {
-    // match event {
-        // Input::Resize(x, y) => world.write_resource::<ResizeEvents>().0.push((x, y)),
-        // // ...
-    // }
-// }
-
-mod color;
+#[derive(Debug, Default)]
+struct CamPos(i32, i32);
 
 #[derive(Debug, Copy, Clone)]
 struct Pos(i32, i32);
@@ -60,6 +56,30 @@ impl Component for BlockColor {
 struct KeyboardController;
 impl Component for KeyboardController {
     type Storage = DenseVecStorage<Self>;
+}
+
+struct CameraFollower;
+impl Component for CameraFollower {
+    type Storage = DenseVecStorage<Self>;
+}
+
+struct CameraFollowerSystem;
+impl<'a> System<'a> for CameraFollowerSystem {
+    type SystemData = (Write<'a, CamPos>, ReadStorage<'a, Pos>, ReadStorage<'a, CameraFollower>);
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (mut cam_pos, positions, camera_followers) = data;
+
+        let mut found_one = false;
+        for (pos, _cf) in (&positions, &camera_followers).join() {
+            if found_one {
+                println!("You have multiple entities with a position and camera follower. This is bad");
+                break;
+            }
+            *cam_pos = CamPos(pos.0, pos.1);
+            found_one = true;
+        }
+    }
 }
 
 struct KeyboardInputSystem;
@@ -95,11 +115,6 @@ impl<'a> System<'a> for RenderSystem {
             block_color.vec.push((tex.clone(), pos.clone()));
         }
     }
-}
-
-#[derive(Default, Debug, Clone)]
-struct ColorPos {
-    vec: Vec<(BlockColor, Pos)>,
 }
 
 fn texture_block<'a>(canvas: &mut Canvas<Window>, texture_creator: &'a TextureCreator<WindowContext>, col: color::Type) -> Texture<'a> {
@@ -149,12 +164,14 @@ pub fn main() {
     world.register::<Pos>();
     world.register::<BlockColor>();
     world.register::<KeyboardController>();
+    world.register::<CameraFollower>();
 
     world
         .create_entity()
         .with(Pos(1, 4))
         .with(BlockColor{ id: color::Type::Black })
         .with(KeyboardController)
+        .with(CameraFollower)
         .build();
     world
         .create_entity()
@@ -180,31 +197,26 @@ pub fn main() {
     world.add_resource(ColorPos{ vec: Vec::new() });
 
     world.add_resource(ArrowKeyEvent(Vec::new()));
-    // let mut color_pos = world.write_resource::<ColorPos>();
-
+    
+    world.add_resource(CamPos(0, 0));
 
     let mut render_sys = RenderSystem;
     let mut keyboard_sys = KeyboardInputSystem;
+    let mut cam_follow_sys = CameraFollowerSystem;
 
     // this struct manages textures. For lifetime reasons, the canvas cannot directly create
     // textures, you have to create a `TextureCreator` instead.
     let texture_creator : TextureCreator<_> = canvas.texture_creator();
 
-    // Create a "target" texture so that we can use our Renderer with it later
-    let _grass_tex = texture_block(&mut canvas, &texture_creator, color::Type::Green);
-    let dirt_tex = texture_block(&mut canvas, &texture_creator, color::Type::Brown);
-    let _water_tex = texture_block(&mut canvas, &texture_creator, color::Type::Blue);
-
     let mut game = ant_sim::AntGame::new();
-
     let mut event_pump = sdl_context.event_pump().unwrap();
-    // let mut frame : u32 = 0;
-// while let Some(event) = window.poll_event() {
-    // match event {
-        // Input::Resize(x, y) => world.write_resource::<ResizeEvents>().0.push((x, y)),
-        // // ...
-    // }
-// }
+
+    let mut tex_vec = Vec::new();
+
+    for n in 0..color::len() {
+        tex_vec.push(texture_block(&mut canvas, &texture_creator, color::enumify(n)));
+    }
+
     'running: loop {
         // get the inputs here
         for event in event_pump.poll_iter() {
@@ -239,22 +251,31 @@ pub fn main() {
         // run systems
         render_sys.run_now(&world.res);
         keyboard_sys.run_now(&world.res);
+        cam_follow_sys.run_now(&world.res);
 
         // get data out of systems
         let color_pos = world.read_resource::<ColorPos>();
+
+        let cam_pos = world.read_resource::<CamPos>();
+
+        println!("Cam Pos {:?}", *cam_pos);
+        println!("Canvas size? {:?}", canvas.output_size());
 
         // rendering
         canvas.set_draw_color(Color::RGB(255, 255, 255));
         canvas.clear();
 
-        // shouldn't be building textures every single time we need them, need a way to cache
         for (bc, pos) in color_pos.vec.clone() {
-            let tex = texture_block(&mut canvas, &texture_creator, bc.id);
-            canvas.copy(&tex, None,
-                            Rect::new(((pos.0 % PLAYGROUND_WIDTH as i32) * SQUARE_SIZE as i32) as i32,
-                                      ((pos.1 % PLAYGROUND_WIDTH as i32) * SQUARE_SIZE as i32) as i32,
-                                      SQUARE_SIZE,
-                                      SQUARE_SIZE)).unwrap();
+            let x_pos_unit = pos.0 - cam_pos.0;
+            let y_pos_unit = pos.1 - cam_pos.1;
+
+            let canvas_size = canvas.output_size().unwrap();
+            let x_pos_px = (x_pos_unit * SQUARE_SIZE as i32) + (canvas_size.0 as i32 / 2);
+            let y_pos_px = (y_pos_unit * SQUARE_SIZE as i32) + (canvas_size.1 as i32 / 2);
+
+            let rect = Rect::new(x_pos_px, y_pos_px, SQUARE_SIZE, SQUARE_SIZE);
+
+            let _res = canvas.copy(&tex_vec[color::indexify(bc.id)], None, rect);
         }
 
         canvas.present();
